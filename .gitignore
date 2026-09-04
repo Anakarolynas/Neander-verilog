@@ -1,0 +1,24 @@
+# Arquivos de simulação
+*.vcd
+*.fst
+*.lxt
+*.lxt2
+
+# Executáveis de simulação
+*.out
+*.vvp
+*.exe
+
+# Arquivos temporários
+*.tmp
+*.bak
+*.swp
+
+# Diretórios de ferramentas
+.iverilog/
+.verilator/
+.vscode/
+
+# Sistema operacional
+Thumbs.db
+.DS_Store
