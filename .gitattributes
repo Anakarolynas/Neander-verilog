@@ -1,0 +1,8 @@
+# Os scripts .bat precisam de quebra de linha CRLF: com LF o cmd do Windows
+# nao consegue localizar os rotulos (:fim, :roda) e os scripts falham.
+*.bat text eol=crlf
+
+# Codigo-fonte e documentacao ficam com LF no repositorio
+*.v    text eol=lf
+*.vh   text eol=lf
+*.md   text eol=lf
