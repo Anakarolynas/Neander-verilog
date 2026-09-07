@@ -1,17 +1,12 @@
-module FSM( // Sequenciador: controla em qual passo do ciclo busca/decodificação/execução se encontra 
+`include "neander_states.vh"
+
+module FSM( // Sequenciador: controla em qual passo do ciclo busca/decodificação/execução se encontra
     input clk,
     input rst,
     input [3:0] opcode, // RI[7:4] - usado para decidir quantos ciclos a instrução atual precisa
 
     output reg [2:0] state // estado atual
     );
-    parameter FETCH_STEP_1 = 3'b000; // Estado de busca 1
-    parameter FETCH_STEP_2 = 3'b001; // Estado de busca 2
-    parameter DECODE = 3'b010; // Estado de decodificação
-    parameter FETCH_OPERAND_STEP_2 = 3'b011; // Estado de busca do operando, segundo passo
-    parameter FETCH_OPERAND_STEP_1 = 3'b100; // Estado de busca do operando, primeiro passo
-    parameter EXECUTE_STEP_1 = 3'b101; // Estado de execução, primeiro passo
-    parameter EXECUTE_STEP_2 = 3'b110; // Estado de execução, segundo passo
     parameter NOP = 4'b0000;
     parameter STA = 4'b0001;
     parameter LDA = 4'b0010;
@@ -26,43 +21,60 @@ module FSM( // Sequenciador: controla em qual passo do ciclo busca/decodificaç�
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            state <= FETCH_STEP_1; // Estado inicial
+            state <= `FETCH_STEP_1; // Estado inicial
         end else begin
             case (state)
-                FETCH_STEP_1: state <= FETCH_STEP_2; // Transição do estado de busca 1 para busca 2
-                FETCH_STEP_2: state <= DECODE; // Transição do estado de busca 2 para decodificação
-                DECODE: begin
-                    // NOP não precisa executar nada: volta direto pra busca
-                    if (opcode == NOP) begin
-                        state <= FETCH_STEP_1;
-                    end
-                    // NOT e HLT não têm operando: executam em 1 ciclo (EXECUTE_STEP_1)
-                    else if (opcode == NOT || opcode == HLT) begin
-                        state <= EXECUTE_STEP_1;
-                    end
-                    // Demais instruções têm operando: precisam buscá-lo antes de executar
-                    else begin
-                        state <= FETCH_OPERAND_STEP_1;
+                //t0 - REM <- PC
+                `FETCH_STEP_1: state <= `FETCH_STEP_2;
+                //t1 - RDM <- MEM(REM), PC <- PC+1
+                `FETCH_STEP_2: state <= `FETCH_STEP_3;
+                //t2 - RI <- RDM (a partir daqui o opcode é válido)
+                `FETCH_STEP_3: state <= `DECODE;
+                //t3 - decodificação
+                `DECODE: begin
+                    case (opcode)
+                        // NOP não faz nada: volta direto para a busca
+                        NOP: state <= `FETCH_STEP_1;
+                        // NOT e HLT não têm operando: vão direto para a execução
+                        NOT, HLT: state <= `EXECUTE_STEP_1;
+                        // Demais instruções (STA, LDA, ADD, OR, AND, JMP, JZ, JN) têm
+                        // operando e precisam buscá-lo antes de executar.
+                        // Os desvios condicionais passam por aqui mesmo quando não
+                        // desviam: o operando precisa ser lido de qualquer forma para
+                        // que o PC avance além dele.
+                        default: state <= `FETCH_OPERAND_STEP_1;
+                    endcase
+                end
+                //t4 - RDM <- MEM(REM), PC <- PC+1
+                `FETCH_OPERAND_STEP_1: state <= `FETCH_OPERAND_STEP_2;
+                //t5 - REM <- RDM (acesso a dado) ou PC <- RDM (desvio)
+                `FETCH_OPERAND_STEP_2: begin
+                    // Os desvios se completam neste ciclo (o PC é atualizado aqui pela
+                    // unidade de controle), então não passam pela execução.
+                    if (opcode == JMP || opcode == JZ || opcode == JN) begin
+                        state <= `FETCH_STEP_1;
+                    end else begin
+                        state <= `EXECUTE_STEP_1;
                     end
                 end
-                FETCH_OPERAND_STEP_1: state <= FETCH_OPERAND_STEP_2; // Transição para o segundo passo de busca do operando
-                FETCH_OPERAND_STEP_2: state <= EXECUTE_STEP_1; // Após buscar o operando, vai para execução
-                EXECUTE_STEP_1: begin
+                //t6 - primeiro ciclo de execução
+                `EXECUTE_STEP_1: begin
                     // HLT trava a FSM aqui indefinidamente (processador parado)
                     if (opcode == HLT) begin
-                        state <= EXECUTE_STEP_1;
+                        state <= `EXECUTE_STEP_1;
                     end
                     // NOT termina em 1 ciclo, volta a buscar a próxima instrução
                     else if (opcode == NOT) begin
-                        state <= FETCH_STEP_1;
+                        state <= `FETCH_STEP_1;
                     end
-                    // Instruções com operando (chegaram via FETCH_OPERAND) precisam do segundo ciclo de execução
+                    // Instruções com operando precisam do segundo ciclo de execução
                     else begin
-                        state <= EXECUTE_STEP_2;
+                        state <= `EXECUTE_STEP_2;
                     end
                 end
-                EXECUTE_STEP_2: state <= FETCH_STEP_1; // Após o segundo ciclo de execução, retorna ao início
-                default: state <= FETCH_STEP_1; // Estado padrão caso algo inesperado aconteça
+                //t7 - segundo ciclo de execução
+                `EXECUTE_STEP_2: state <= `FETCH_STEP_1;
+                default: state <= `FETCH_STEP_1; // Estado padrão caso algo inesperado aconteça
             endcase
         end
     end
