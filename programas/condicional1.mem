@@ -1,0 +1,71 @@
+// ============================================================
+// NEANDER - Estrutura condicional: se/senão com JN
+//
+// Testa o sinal do valor guardado em 40 e grava um marcador
+// diferente conforme o caminho tomado. Equivale a:
+//
+//     se (valor < 0)
+//         resultado = 2
+//     senao
+//         resultado = 1
+//
+// O Neander não tem instrução de comparação: quem decide é a flag N,
+// que o LDA atualiza junto com o carregamento do AC.
+//
+// Endereço  Instrução   Efeito
+// --------  ----------  ------------------------------------------
+//    0      LDA 40      AC = 11110000 (negativo, N = 1)
+//    2      JN  8       N = 1, então desvia
+//    4      LDA 41      caminho "senão": AC = 1
+//    6      JMP 10
+//    8      LDA 42      caminho "se":    AC = 2
+//   10      STA 43      memoria[43] = marcador
+//   12      HLT
+//
+// Resultado esperado: AC = 2, memoria[43] = 2 (caminho do negativo)
+// ============================================================
+
+00100000   // 0  - LDA
+00101000   // 1  -   endereco 40
+10100000   // 2  - JN
+00001000   // 3  -   endereco 8
+00100000   // 4  - LDA          (caminho: valor positivo)
+00101001   // 5  -   endereco 41
+10000000   // 6  - JMP
+00001010   // 7  -   endereco 10
+00100000   // 8  - LDA          (caminho: valor negativo)
+00101010   // 9  -   endereco 42
+00010000   // 10 - STA
+00101011   // 11 -   endereco 43
+11110000   // 12 - HLT
+00000000   // 13
+00000000   // 14
+00000000   // 15
+00000000   // 16
+00000000   // 17
+00000000   // 18
+00000000   // 19
+00000000   // 20
+00000000   // 21
+00000000   // 22
+00000000   // 23
+00000000   // 24
+00000000   // 25
+00000000   // 26
+00000000   // 27
+00000000   // 28
+00000000   // 29
+00000000   // 30
+00000000   // 31
+00000000   // 32
+00000000   // 33
+00000000   // 34
+00000000   // 35
+00000000   // 36
+00000000   // 37
+00000000   // 38
+00000000   // 39
+11110000   // 40 - valor testado: negativo
+00000001   // 41 - marcador "positivo"
+00000010   // 42 - marcador "negativo"
+00000000   // 43 - resultado

@@ -284,18 +284,18 @@ Ajustado para a nova interface. Os 10 testes continuam passando:
 - O teste 9 (`AC → memória`) faz `RDM ← AC` antes, já que o dado escrito sai do RDM.
 - O teste 10 (flags) carrega `nz_carga`, já que as flags agora são registradas.
 
-### `tb/cpu/cpu_tb.v` e `programas/integracao.mem` (novos)
+### `tb/cpu/cpu_tb.v` e `programas/` (novos)
 
-Testbench da CPU executando um programa que exercita leitura, ULA, escrita, os dois
-desfechos de um desvio condicional e a parada. Confere automaticamente o AC, a
-memória, as flags e onde o processador parou.
+Testbench da CPU instanciando uma CPU por programa, cada uma com a sua própria
+memória, executando todas em paralelo. Confere automaticamente o AC, a memória, as
+flags e onde cada processador parou.
+
+Os seis programas de demonstração exigidos pelo projeto estão em `programas/`:
+`soma1`, `soma2`, `logica1`, `logica2`, `condicional1` e `condicional2`, mais o
+`integracao` usado para validar a ligação entre os módulos.
 
 ## O que ainda falta para a entrega
 
-Pelos critérios do projeto, ainda faltam:
-
-- **Seis programas de demonstração**: duas somas, duas operações lógicas e duas
-  estruturas condicionais. Hoje existe um único programa, de integração.
 - **Diagrama da arquitetura e da FSM**, com a descrição dos estados e os sinais de
   controle associados a cada um. A descrição textual já está no README; falta o
   desenho.

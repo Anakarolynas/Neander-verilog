@@ -1,0 +1,80 @@
+// ============================================================
+// NEANDER - Estrutura condicional: laço com JZ
+//
+// Soma 5 três vezes, usando um contador que é decrementado até
+// chegar a zero. Equivale a:
+//
+//     contador = 3
+//     resultado = 0
+//     enquanto (contador != 0) {
+//         contador = contador - 1
+//         resultado = resultado + 5
+//     }
+//
+// O Neander não tem subtração: o decremento é feito somando 11111111,
+// que é -1 em complemento de dois. A saída do laço é decidida pela
+// flag Z, atualizada pelo LDA do contador.
+//
+// Endereço  Instrução   Efeito
+// --------  ----------  ------------------------------------------
+//    0      LDA 41      AC = 0
+//    2      STA 42      resultado = 0
+//    4      LDA 40      início do laço: AC = contador
+//    6      JZ  20      contador == 0, então sai do laço
+//    8      ADD 43      AC = contador + (-1)
+//   10      STA 40      contador = contador - 1
+//   12      LDA 42      AC = resultado
+//   14      ADD 44      AC = resultado + 5
+//   16      STA 42      resultado = resultado + 5
+//   18      JMP 4       volta ao início do laço
+//   20      LDA 42      fim: AC = resultado
+//   22      HLT
+//
+// Resultado esperado: AC = 15, memoria[42] = 15, memoria[40] = 0
+// ============================================================
+
+00100000   // 0  - LDA
+00101001   // 1  -   endereco 41
+00010000   // 2  - STA
+00101010   // 3  -   endereco 42
+00100000   // 4  - LDA          (inicio do laco)
+00101000   // 5  -   endereco 40
+10010000   // 6  - JZ
+00010100   // 7  -   endereco 20
+00110000   // 8  - ADD
+00101011   // 9  -   endereco 43
+00010000   // 10 - STA
+00101000   // 11 -   endereco 40
+00100000   // 12 - LDA
+00101010   // 13 -   endereco 42
+00110000   // 14 - ADD
+00101100   // 15 -   endereco 44
+00010000   // 16 - STA
+00101010   // 17 -   endereco 42
+10000000   // 18 - JMP
+00000100   // 19 -   endereco 4
+00100000   // 20 - LDA          (saida do laco)
+00101010   // 21 -   endereco 42
+11110000   // 22 - HLT
+00000000   // 23
+00000000   // 24
+00000000   // 25
+00000000   // 26
+00000000   // 27
+00000000   // 28
+00000000   // 29
+00000000   // 30
+00000000   // 31
+00000000   // 32
+00000000   // 33
+00000000   // 34
+00000000   // 35
+00000000   // 36
+00000000   // 37
+00000000   // 38
+00000000   // 39
+00000011   // 40 - contador: 3
+00000000   // 41 - zero, para inicializar o resultado
+00000000   // 42 - resultado
+11111111   // 43 - constante -1 (complemento de dois)
+00000101   // 44 - incremento: 5

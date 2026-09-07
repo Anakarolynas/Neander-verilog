@@ -158,17 +158,32 @@ isso os scripts de simulação rodam a partir da raiz do projeto.
 ### Programas
 
 Ficam em `programas/`, um valor binário de 8 bits por linha, começando do
-endereço 0. O formato está detalhado na seção da memória.
+endereço 0. O formato está detalhado na seção da memória. Cada arquivo traz no
+cabeçalho a listagem comentada, instrução por instrução, e o resultado esperado.
 
-| Programa | O que faz |
-|---|---|
-| `integracao.mem` | Exercita o caminho completo: leitura, ULA, escrita, os dois desfechos de um desvio condicional e a parada |
+| Programa | O que faz | Resultado |
+|---|---|---|
+| `soma1.mem` | Soma dois valores: `5 + 3` | `memoria[42] = 8` |
+| `soma2.mem` | Soma três parcelas acumulando no AC: `10 + 20 + 7` | `memoria[43] = 37` |
+| `logica1.mem` | Máscara de bits com AND: `11110000 AND 00111100` | `memoria[42] = 00110000` |
+| `logica2.mem` | OR seguido de NOT: `(11110000 OR 00001111)` invertido | `memoria[42] = 0`, `Z = 1` |
+| `condicional1.mem` | Se/senão decidido pela flag N (teste de sinal) | `memoria[43] = 2` |
+| `condicional2.mem` | Laço decidido pela flag Z, somando 5 três vezes | `memoria[42] = 15` |
+| `integracao.mem` | Caminho completo, com os dois desfechos de um desvio | `AC = 247` |
+
+Os seis primeiros são os programas de demonstração exigidos pelo projeto: duas
+somas, duas operações lógicas e duas estruturas condicionais.
+
+Como o Neander não tem subtração, o decremento do contador em `condicional2.mem`
+é feito somando `11111111`, que é -1 em complemento de dois.
 
 ### Testbench
 
-`tb/cpu/cpu_tb.v` executa o programa de integração e confere automaticamente o
-AC, as posições de memória escritas, as flags e o endereço onde o processador
-parou. Para rodar: duplo clique em `tb\cpu\cpu_tb.bat`.
+`tb/cpu/cpu_tb.v` instancia uma CPU para cada programa — cada uma com a sua
+própria memória — e as executa em paralelo, conferindo automaticamente o AC, as
+posições de memória escritas, as flags e o endereço onde o processador parou.
+
+Para rodar: duplo clique em `tb\cpu\cpu_tb.bat`.
 
 ## Unidade de Controle (`src/unit_control.v` + `src/fsm.v`)
 
