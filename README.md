@@ -182,10 +182,82 @@ a FSM não consulta `Z`/`N`.
 - **A memória precisa ter leitura assíncrona (combinacional).** O `read` e o
   `carga_rdm` são ativados no mesmo ciclo (t1, t4, t6), com o endereço já estável no REM
   desde o ciclo anterior. Se a memória tiver leitura síncrona, o RDM captura lixo e será
-  necessário um estado extra por leitura.
+  necessário um estado extra por leitura. A `RAM` de `src/mem.v` já atende a isso.
 - A entrada `din` do PC deve vir do RDM (para o `carga_pc` dos desvios).
 - A entrada Y da ULA deve vir do RDM; a entrada X vem do AC.
 - O `opcode` vem dos 4 bits mais significativos do RI.
+- **Falta um registrador para as flags N e Z.** A `ula.v` gera `N` e `Z` de forma
+  combinacional, refletindo sempre o resultado atual. A unidade de controle precisa das
+  flags *armazenadas*: um `JZ` que vem depois de um `ADD` tem que enxergar o `Z` daquele
+  `ADD`, e nesse momento a ULA já está calculando outra coisa. São dois flip-flops
+  carregados por `carga_nz` — no diagrama é a caixinha `N Z`, separada da ULA. Sem eles
+  os desvios condicionais não funcionam.
+
+## Memória (`src/mem.v`)
+
+Módulo `RAM`: 256 posições de 8 bits, endereçadas pelo REM.
+
+```verilog
+RAM memoria (
+    .clk(clk),
+    .address(rem_out),        // endereço vindo do REM
+    .data_in(rdm_out),        // dado a gravar, vindo do RDM
+    .write_enable(write),     // sinais da unidade de controle
+    .read_enable(read),
+    .data_out(mem_out)        // vai para a entrada 0 do MUX do RDM
+);
+```
+
+### Leitura assíncrona, escrita síncrona
+
+Esta é a característica mais importante do módulo, e ela **não é opcional**: o
+timing de toda a unidade de controle depende dela.
+
+| Operação | Quando acontece |
+|---|---|
+| Leitura | Combinacional — o dado sai no mesmo ciclo em que o endereço está no REM |
+| Escrita | Na borda de subida do clock, quando `write_enable` está ativo |
+
+A unidade de controle ativa `read` e `carga_rdm` **no mesmo ciclo** (t1, t4 e t6). Se a
+leitura fosse registrada (`data_out <= memory[address]` dentro de um `always @(posedge
+clk)`), o dado só apareceria no ciclo seguinte e o RDM capturaria o valor anterior — o
+mesmo problema que motivou a criação do estado `FETCH_STEP_3` para o `RI ← RDM`.
+
+Fora da leitura a saída fica em `8'h00`, e não em alta impedância: ela vai direto para
+uma entrada do MUX do RDM, não é um barramento compartilhado, e o `z` se propagaria para
+dentro do RDM.
+
+A memória **não é apagada no reset** — isso destruiria o programa carregado. Por isso o
+módulo não tem porta `rst`.
+
+### Carregando um programa
+
+O conteúdo inicial vem de um arquivo, informado pelo parâmetro `PROGRAMA`:
+
+```verilog
+RAM #(.PROGRAMA("programas/soma.mem")) memoria ( ... );
+```
+
+O arquivo tem um valor binário de 8 bits por linha, uma posição de memória por linha,
+começando do endereço 0. Exemplo de um programa que soma duas posições e guarda o
+resultado:
+
+```
+00100000   // LDA
+00000100   //   endereco 4
+00110000   // ADD
+00000101   //   endereco 5
+00010000   // STA
+00000110   //   endereco 6
+11110000   // HLT
+```
+
+Comentários usam `//`, como em Verilog. **Não use `;`** — o `$readmemb` não reconhece
+esse caractere e passa a ler o arquivo errado a partir dali, silenciosamente.
+
+Sem o parâmetro, a memória começa zerada. Quando o programa tem menos de 256 linhas, o
+Icarus imprime `Not enough words in the file` — é esperado, as posições restantes ficam
+em zero.
 
 ## Autores
 
