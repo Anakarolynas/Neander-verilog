@@ -51,7 +51,7 @@ module Unit_Control( // Unidade de controle completa: FSM (sequenciador) + decod
     );
 
     always @(*) begin
-        // Valores padrão: evita bugs e latches
+        // Valores padrão: evita bugs
         carga_rem = 1'b0;
         carga_rdm = 1'b0;
         incrementa_pc = 1'b0;

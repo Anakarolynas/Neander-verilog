@@ -74,7 +74,8 @@ module FSM( // Sequenciador: controla em qual passo do ciclo busca/decodificaç�
                 end
                 //t7 - segundo ciclo de execução
                 `EXECUTE_STEP_2: state <= `FETCH_STEP_1;
-                default: state <= `FETCH_STEP_1; // Estado padrão caso algo inesperado aconteça
+                default: state <= `FETCH_STEP_1; 
+                // Estado padrão caso algo inesperado aconteça
             endcase
         end
     end

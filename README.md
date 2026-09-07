@@ -5,9 +5,9 @@ Projeto de implementação do processador Neander utilizando Verilog HDL.
 ## Estrutura
 
 - `src/` - módulos do processador
-- `tb/` - testbenches
+- `tb/` - testbenches, uma subpasta por módulo
 - `docs/` - documentação e diagramas
-- `sim/` - arquivos relacionados às simulações
+- `sim/` - executáveis gerados pelas simulações (não versionado, veja o `.gitignore`)
 
 ## Ferramentas
 
@@ -15,6 +15,78 @@ Projeto de implementação do processador Neander utilizando Verilog HDL.
 - Icarus Verilog
 - GTKWave
 - Visual Studio Code
+
+## Como rodar as simulações
+
+Cada módulo tem sua própria pasta dentro de `tb/`, com o testbench e um script
+que compila e executa a simulação:
+
+```
+tb/
+├── simular_tudo.bat          roda todos os testbenches de uma vez
+├── fsm/
+│   ├── fsm_tb.v
+│   └── fsm_tb.bat
+├── mux/
+│   ├── mux_tb.v
+│   └── mux_tb.bat
+├── pc/
+├── ula/
+└── unit_control/
+```
+
+### Rodando
+
+Há três formas, todas equivalentes:
+
+1. **Duplo clique** no `.bat` da pasta do módulo. A janela fica aberta no final
+   para você ler o resultado.
+2. **Pelo terminal**, de qualquer pasta do projeto:
+   ```
+   tb\fsm\fsm_tb.bat
+   tb\unit_control\unit_control_tb.bat
+   ```
+3. **Todos de uma vez**, com `tb\simular_tudo.bat` (mostra um resumo no final e
+   retorna código de erro diferente de zero se algum falhar).
+
+Passando o argumento `nopause` (ex.: `tb\fsm\fsm_tb.bat nopause`) o script não
+espera você apertar uma tecla no final — útil para encadear comandos.
+
+Os executáveis gerados vão para `sim\sim_<módulo>`. Essa pasta é recriada
+automaticamente e **não é versionada**: são arquivos binários gerados, que só
+causariam conflito no Git.
+
+### Pré-requisito
+
+O **Icarus Verilog** precisa estar instalado e no PATH do Windows (a pasta `bin`
+dele, por exemplo `C:\iverilog\bin`). Se não estiver, os scripts avisam com uma
+mensagem explicando o que fazer, em vez de falhar com um erro confuso.
+
+### Criando um testbench para um módulo novo
+
+1. Crie a pasta `tb/<módulo>/` e escreva o `tb/<módulo>/<módulo>_tb.v`.
+2. Copie qualquer `.bat` existente para `tb/<módulo>/<módulo>_tb.bat` e ajuste
+   apenas as duas linhas do topo:
+   ```bat
+   set "NOME=<módulo>"
+   set "FONTES=src\<módulo>.v"
+   ```
+   O `FONTES` lista todos os arquivos de `src/` que o testbench precisa. Se o
+   módulo instanciar outros, some todos ali — por exemplo, o da unidade de
+   controle usa `src\unit_control.v src\fsm.v`, porque a `Unit_Control`
+   instancia a `FSM` por dentro.
+3. Adicione uma linha `call :roda <módulo>` no `tb/simular_tudo.bat`.
+
+O resto do script é igual em todos e não precisa ser alterado. Ele já cuida de
+achar a raiz do projeto (funciona de qualquer pasta), de passar `-I src` para o
+`iverilog` — necessário para o `` `include "neander_states.vh" `` ser encontrado —
+e de reportar erro de compilação separado de erro de execução.
+
+> **Atenção ao editar os `.bat`:** eles precisam ser salvos com quebra de linha
+> **CRLF**. Com LF o `cmd` do Windows não encontra os rótulos (`:fim`, `:roda`) e
+> o script falha com "não foi possível localizar o rótulo em lote". O
+> `.gitattributes` do projeto já força isso no clone, mas vale conferir se o seu
+> editor não estiver convertendo.
 
 ## Arquitetura
 

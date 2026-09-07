@@ -9,6 +9,9 @@
 *.vvp
 *.exe
 
+# Saída dos scripts de simulação (arquivos gerados, não versionar)
+sim/
+
 # Arquivos temporários
 *.tmp
 *.bak
