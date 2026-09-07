@@ -24,6 +24,7 @@ call :roda pc
 call :roda ula
 call :roda fsm
 call :roda unit_control
+call :roda datapath
 
 echo.
 echo ============================================================
