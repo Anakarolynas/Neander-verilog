@@ -25,3 +25,6 @@ sim/
 # Sistema operacional
 Thumbs.db
 .DS_Store
+
+# Enunciado do projeto (material da disciplina, não faz parte do código)
+/Projeto final - Neander.pdf

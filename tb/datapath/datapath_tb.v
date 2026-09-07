@@ -65,10 +65,16 @@ module datapath_tb;
     reg [7:0] mem_din;
 
     // ========================================================
-    // SELEÇÃO DA ENTRADA DO AC
+    // SELEÇÃO DA ENTRADA DO RDM
     // ========================================================
 
-    reg ac_sel;
+    reg rdm_sel;
+
+    // ========================================================
+    // CARGA DAS FLAGS N E Z
+    // ========================================================
+
+    reg nz_carga;
 
     // ========================================================
     // SAÍDAS DO DATAPATH
@@ -102,14 +108,14 @@ module datapath_tb;
         .rem_sel      (rem_sel),
 
         .rdm_carga    (rdm_carga),
+        .rdm_sel      (rdm_sel),
         .ri_carga     (ri_carga),
         .ac_carga     (ac_carga),
 
         .op_ula       (op_ula),
+        .nz_carga     (nz_carga),
 
-        .mem_din  (mem_din),
-
-        .ac_sel       (ac_sel),
+        .mem_din      (mem_din),
 
         .pc_out       (pc_out),
         .rem_out      (rem_out),
@@ -160,7 +166,8 @@ module datapath_tb;
 
         mem_din = 8'b00000000;
 
-        ac_sel = 0;
+        rdm_sel  = 0;
+        nz_carga = 0;
 
         // ----------------------------------------------------
         // RESET
@@ -298,8 +305,8 @@ module datapath_tb;
 
         rdm_carga = 0;
 
-        // Seleciona RDM no MUX do AC
-        ac_sel   = 1;
+        // O AC recebe o RDM pela operação ID da ULA, que devolve o Y
+        op_ula   = 3'b100;
         ac_carga = 1;
 
         #10;
@@ -334,8 +341,6 @@ module datapath_tb;
         // ULA = AC + RDM
         op_ula = 3'b000;
 
-        // Seleciona resultado da ULA
-        ac_sel   = 0;
         ac_carga = 1;
 
         #10;
@@ -406,6 +411,17 @@ module datapath_tb;
         $display("TESTE 9: AC -> MEMORIA");
         $display("========================================");
 
+        // O dado escrito na memória sai do RDM, então o STA primeiro
+        // carrega o AC no RDM através do MUX (rdm_sel = 1).
+
+        rdm_sel   = 1;
+        rdm_carga = 1;
+
+        #10;
+
+        rdm_carga = 0;
+        rdm_sel   = 0;
+
         $display("AC           = %d", ac_out);
         $display("MEM_DOUT = %d", mem_dout);
         $display("MEM_ADDR     = %d", mem_addr);
@@ -436,7 +452,12 @@ module datapath_tb;
         // ULA = RDM
         op_ula = 3'b100;
 
-        #1;
+        // As flags agora sao registradas: precisam de nz_carga
+        nz_carga = 1;
+
+        #10;
+
+        nz_carga = 0;
 
         $display("");
         $display("Caso 1 - Resultado zero");
@@ -458,7 +479,12 @@ module datapath_tb;
 
         rdm_carga = 0;
 
-        #1;
+        // As flags agora sao registradas: precisam de nz_carga
+        nz_carga = 1;
+
+        #10;
+
+        nz_carga = 0;
 
         $display("");
         $display("Caso 2 - Resultado positivo");
@@ -483,7 +509,12 @@ module datapath_tb;
 
         rdm_carga = 0;
 
-        #1;
+        // As flags agora sao registradas: precisam de nz_carga
+        nz_carga = 1;
+
+        #10;
+
+        nz_carga = 0;
 
         $display("");
         $display("Caso 3 - Resultado negativo");

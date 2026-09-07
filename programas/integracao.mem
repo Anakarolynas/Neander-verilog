@@ -1,0 +1,60 @@
+// ============================================================
+// NEANDER - Programa de integração
+//
+// Exercita o caminho completo do processador: busca, decodificação,
+// busca de operando e execução, passando por acesso à memória
+// (leitura e escrita), operação da ULA e os dois desfechos de um
+// desvio condicional.
+//
+// Endereço  Instrução   Efeito
+// --------  ----------  ------------------------------------------
+//    0      LDA 32      AC = 5
+//    2      ADD 33      AC = 5 + 3 = 8      (N=0, Z=0)
+//    4      STA 34      memoria[34] = 8
+//    6      JZ  20      Z=0, então NÃO desvia
+//    8      NOT         AC = NOT(8) = 247   (N=1, Z=0)
+//    9      JN  14      N=1, então desvia
+//   11      HLT         não deve ser alcançado
+//   14      STA 35      memoria[35] = 247
+//   16      HLT         parada esperada
+//   20      HLT         não deve ser alcançado
+//
+// Resultado esperado: AC = 247, memoria[34] = 8, memoria[35] = 247
+// ============================================================
+
+00100000   // 0  - LDA
+00100000   // 1  -   endereco 32
+00110000   // 2  - ADD
+00100001   // 3  -   endereco 33
+00010000   // 4  - STA
+00100010   // 5  -   endereco 34
+10010000   // 6  - JZ
+00010100   // 7  -   endereco 20
+01100000   // 8  - NOT
+10100000   // 9  - JN
+00001110   // 10 -   endereco 14
+11110000   // 11 - HLT
+00000000   // 12
+00000000   // 13
+00010000   // 14 - STA
+00100011   // 15 -   endereco 35
+11110000   // 16 - HLT
+00000000   // 17
+00000000   // 18
+00000000   // 19
+11110000   // 20 - HLT
+00000000   // 21
+00000000   // 22
+00000000   // 23
+00000000   // 24
+00000000   // 25
+00000000   // 26
+00000000   // 27
+00000000   // 28
+00000000   // 29
+00000000   // 30
+00000000   // 31
+00000101   // 32 - dado: 5
+00000011   // 33 - dado: 3
+00000000   // 34 - resultado da soma
+00000000   // 35 - resultado do NOT

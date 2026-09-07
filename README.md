@@ -6,6 +6,7 @@ Projeto de implementação do processador Neander utilizando Verilog HDL.
 
 - `src/` - módulos do processador
 - `tb/` - testbenches, uma subpasta por módulo
+- `programas/` - programas em linguagem de máquina para rodar na CPU
 - `docs/` - documentação e diagramas
 - `sim/` - executáveis gerados pelas simulações (não versionado, veja o `.gitignore`)
 
@@ -24,6 +25,10 @@ que compila e executa a simulação:
 ```
 tb/
 ├── simular_tudo.bat          roda todos os testbenches de uma vez
+├── cpu/
+│   ├── cpu_tb.v              testbench do processador completo
+│   └── cpu_tb.bat
+├── datapath/
 ├── fsm/
 │   ├── fsm_tb.v
 │   └── fsm_tb.bat
@@ -100,6 +105,70 @@ O projeto implementa a arquitetura didática Neander, incluindo:
 - Unidade de Controle
 - CPU
 - ISA do Neander
+
+## CPU (`src/cpu.v`)
+
+Módulo de topo do processador. Instancia e liga as três partes:
+
+```
+                    ┌──────────────────┐
+     opcode (RI)    │                  │   sinais de controle
+   ┌───────────────►│  Unit_Control    ├────────────────┐
+   │    flags N,Z   │  (FSM + decod.)  │                │
+   │  ┌────────────►│                  ├──────┐         │
+   │  │             └──────────────────┘      │         │
+   │  │                                  read │         │
+   │  │                                 write │         ▼
+   │  │             ┌──────────────────┐      │  ┌──────────────┐
+   │  └─────────────┤                  │      └─►│              │
+   └────────────────┤    datapath      │  addr   │     RAM      │
+                    │  registradores   ├────────►│  256 x 8     │
+                    │  MUXes, ULA      │  dado   │              │
+                    │  flags N,Z       ├────────►│              │
+                    │                  │◄────────┤              │
+                    └──────────────────┘  lido   └──────────────┘
+```
+
+- Os sinais de controle vão da `Unit_Control` para o `datapath`.
+- `read` e `write` vão da `Unit_Control` direto para a `RAM`.
+- O endereço (REM) e o dado a escrever (RDM) saem do `datapath`; o dado lido volta.
+- O `opcode` são os 4 bits mais significativos do RI, e as flags N e Z voltam do
+  `datapath` para a `Unit_Control`.
+
+### Usando
+
+```verilog
+cpu #(.PROGRAMA("programas/integracao.mem")) neander (
+    .clk (clk),
+    .rst (rst),
+    .pc  (pc),   // saídas de observação, para o testbench
+    .ac  (ac),   // e para as formas de onda; não fazem parte
+    .ri  (ri),   // do funcionamento do processador
+    .n   (n),
+    .z   (z)
+);
+```
+
+O `rst` precisa ficar ativo por pelo menos um ciclo completo de clock: os
+registradores e o PC têm reset síncrono.
+
+O caminho do programa é relativo à pasta de onde a simulação é executada — por
+isso os scripts de simulação rodam a partir da raiz do projeto.
+
+### Programas
+
+Ficam em `programas/`, um valor binário de 8 bits por linha, começando do
+endereço 0. O formato está detalhado na seção da memória.
+
+| Programa | O que faz |
+|---|---|
+| `integracao.mem` | Exercita o caminho completo: leitura, ULA, escrita, os dois desfechos de um desvio condicional e a parada |
+
+### Testbench
+
+`tb/cpu/cpu_tb.v` executa o programa de integração e confere automaticamente o
+AC, as posições de memória escritas, as flags e o endereço onde o processador
+parou. Para rodar: duplo clique em `tb\cpu\cpu_tb.bat`.
 
 ## Unidade de Controle (`src/unit_control.v` + `src/fsm.v`)
 
@@ -186,12 +255,12 @@ a FSM não consulta `Z`/`N`.
 - A entrada `din` do PC deve vir do RDM (para o `carga_pc` dos desvios).
 - A entrada Y da ULA deve vir do RDM; a entrada X vem do AC.
 - O `opcode` vem dos 4 bits mais significativos do RI.
-- **Falta um registrador para as flags N e Z.** A `ula.v` gera `N` e `Z` de forma
+- **As flags N e Z precisam ser registradas.** A `ula.v` gera `N` e `Z` de forma
   combinacional, refletindo sempre o resultado atual. A unidade de controle precisa das
   flags *armazenadas*: um `JZ` que vem depois de um `ADD` tem que enxergar o `Z` daquele
   `ADD`, e nesse momento a ULA já está calculando outra coisa. São dois flip-flops
-  carregados por `carga_nz` — no diagrama é a caixinha `N Z`, separada da ULA. Sem eles
-  os desvios condicionais não funcionam.
+  carregados por `carga_nz` — no diagrama é a caixinha `N Z`, separada da ULA. Já
+  implementados no `datapath.v`.
 
 ## Memória (`src/mem.v`)
 

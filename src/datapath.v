@@ -13,10 +13,11 @@
 //   - RDM
 //   - RI
 //   - AC
+//   - N e Z (flags da ULA)
 //
 // MUXes:
 //   - MUX REM: seleciona PC ou RDM
-//   - MUX AC : seleciona ULA ou RDM
+//   - MUX RDM: seleciona memória ou AC
 //
 // Caminho do PC:
 //   - PC pode ser incrementado internamente
@@ -25,9 +26,14 @@
 // Caminho da memória:
 //   REM -> endereço da memória
 //   memória -> RDM
+//   RDM -> dado escrito na memória
 //
 // Caminho da instrução:
 //   RDM -> RI
+//
+// O AC recebe sempre o resultado da ULA: o LDA usa a operação ID,
+// que devolve o Y da ULA (ligado ao RDM), então não é preciso um
+// MUX na entrada do AC.
 // ============================================================
 
 module datapath (
@@ -54,6 +60,7 @@ module datapath (
     // --------------------------------------------------------
 
     input wire rdm_carga,
+    input wire rdm_sel,
     input wire ri_carga,
     input wire ac_carga,
 
@@ -64,16 +71,16 @@ module datapath (
     input wire [2:0] op_ula,
 
     // --------------------------------------------------------
+    // Controle das flags N e Z
+    // --------------------------------------------------------
+
+    input wire nz_carga,
+
+    // --------------------------------------------------------
     // Entrada de dados da memória
     // --------------------------------------------------------
 
     input wire [7:0] mem_din,
-
-    // --------------------------------------------------------
-    // Seleção da entrada do AC
-    // --------------------------------------------------------
-
-    input wire ac_sel,
 
     // --------------------------------------------------------
     // Saídas dos registradores
@@ -109,11 +116,15 @@ module datapath (
     // Entrada do REM
     wire [7:0] rem_din;
 
+    // Entrada do RDM
+    wire [7:0] rdm_din;
+
     // Resultado da ULA
     wire [7:0] ula_resultado;
 
-    // Entrada do AC após o MUX
-    wire [7:0] ac_din_mux;
+    // Flags geradas pela ULA, antes de serem registradas
+    wire n_ula;
+    wire z_ula;
 
 
     // ========================================================
@@ -134,18 +145,18 @@ module datapath (
 
 
     // ========================================================
-    // MUX DO AC
+    // MUX DO RDM
     //
-    // ac_sel = 0 -> resultado da ULA
-    // ac_sel = 1 -> RDM
+    // rdm_sel = 0 -> dado vindo da memória (leitura)
+    // rdm_sel = 1 -> AC (usado pelo STA, antes da escrita)
     // ========================================================
 
-    mux mux_ac (
+    mux mux_rdm (
 
-        .data_a (ula_resultado),
-        .data_b (rdm_out),
-        .sel    (ac_sel),
-        .dout   (ac_din_mux)
+        .data_a (mem_din),
+        .data_b (ac_out),
+        .sel    (rdm_sel),
+        .dout   (rdm_din)
 
     );
 
@@ -163,8 +174,8 @@ module datapath (
         .Y         (rdm_out),
         .op_ula    (op_ula),
         .resultado (ula_resultado),
-        .N         (N),
-        .Z         (Z)
+        .N         (n_ula),
+        .Z         (z_ula)
 
     );
 
@@ -206,7 +217,7 @@ module datapath (
     // ========================================================
     // RDM
     //
-    // Recebe o dado vindo da memória.
+    // Recebe o dado escolhido pelo MUX: memória ou AC.
     // ========================================================
 
     register8 rdm_inst (
@@ -214,7 +225,7 @@ module datapath (
         .clk   (clk),
         .rst   (rst),
         .carga (rdm_carga),
-        .din   (mem_din),
+        .din   (rdm_din),
         .dout  (rdm_out)
 
     );
@@ -240,9 +251,8 @@ module datapath (
     // ========================================================
     // AC
     //
-    // Recebe:
-    //   - ULA, quando ac_sel = 0
-    //   - RDM, quando ac_sel = 1
+    // Recebe sempre o resultado da ULA. Para o LDA, a unidade de
+    // controle seleciona a operação ID, que devolve o Y (o RDM).
     // ========================================================
 
     register8 ac_inst (
@@ -250,10 +260,40 @@ module datapath (
         .clk   (clk),
         .rst   (rst),
         .carga (ac_carga),
-        .din   (ac_din_mux),
+        .din   (ula_resultado),
         .dout  (ac_out)
 
     );
+
+
+    // ========================================================
+    // FLAGS N E Z
+    //
+    // A ULA gera N e Z de forma combinacional, refletindo sempre a
+    // operação do momento. Os desvios condicionais precisam das flags
+    // da última operação executada, por isso elas são guardadas aqui,
+    // sob o comando de nz_carga.
+    // ========================================================
+
+    reg n_flag;
+    reg z_flag;
+
+    always @(posedge clk) begin
+
+        if (rst) begin
+            n_flag <= 1'b0;
+            z_flag <= 1'b0;
+        end
+
+        else if (nz_carga) begin
+            n_flag <= n_ula;
+            z_flag <= z_ula;
+        end
+
+    end
+
+    assign N = n_flag;
+    assign Z = z_flag;
 
 
     // ========================================================
@@ -263,8 +303,8 @@ module datapath (
     // Endereço enviado à memória.
     assign mem_addr = rem_out;
 
-    // Dado enviado à memória.
-    assign mem_dout = ac_out;
+    // Dado enviado à memória: vem do RDM, que o STA carrega com o AC.
+    assign mem_dout = rdm_out;
 
 
 endmodule

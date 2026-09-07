@@ -1,5 +1,13 @@
 # Integração do Datapath — o que falta ajustar
 
+> **Status: resolvido.** Os quatro itens deste documento foram implementados, e o
+> `src/cpu.v` amarrando datapath, memória e unidade de controle já existe. O
+> processador executa programas de ponta a ponta, com os desvios condicionais
+> funcionando — veja `tb/cpu/cpu_tb.v`.
+>
+> O documento continua aqui como registro do que foi encontrado e por quê. As
+> mudanças no `datapath.v` estão descritas em cada item.
+
 Testei o `datapath.v` ligado à unidade de controle e à memória, rodando programas
 reais em Neander. Este documento resume o que já funciona e o que ainda precisa
 ser ajustado.
@@ -241,3 +249,53 @@ Para rodar: duplo clique em `tb\datapath\datapath_tb.bat`, ou
 4. Escrever o `cpu.v` amarrando tudo
 
 Depois do passo 1 o processador já roda programas com desvios condicionais.
+
+---
+
+## O que foi implementado
+
+Os quatro passos acima foram aplicados. Resumo das mudanças:
+
+### `src/datapath.v`
+
+| Mudança | Item |
+|---|---|
+| Nova porta `nz_carga` e registrador das flags N e Z | 1 |
+| Nova porta `rdm_sel` e `mux_rdm` na entrada do RDM | 2 |
+| `mem_dout` passou a vir do `rdm_out` | 3 |
+| `mux_ac` e a porta `ac_sel` removidos; o AC recebe direto da ULA | 4 |
+
+A nomenclatura seguiu o padrão do módulo (`<bloco>_<sinal>`), por isso `rdm_sel` e
+`nz_carga`, e não `sel_rdm`/`carga_nz` como na unidade de controle. A ligação entre
+os dois nomes é feita no `cpu.v`.
+
+### `src/cpu.v` (novo)
+
+Módulo de topo, instanciando `datapath` + `RAM` + `Unit_Control` e fazendo a ponte
+entre os nomes de sinais dos dois lados. Tem um parâmetro `PROGRAMA` para carregar
+o programa na memória e saídas de observação (`pc`, `ac`, `ri`, `n`, `z`) para o
+testbench e para as formas de onda.
+
+### `tb/datapath/datapath_tb.v`
+
+Ajustado para a nova interface. Os 10 testes continuam passando:
+
+- O teste 5 (`RDM → AC`) agora usa a operação ID da ULA, em vez do `mux_ac`.
+- O teste 9 (`AC → memória`) faz `RDM ← AC` antes, já que o dado escrito sai do RDM.
+- O teste 10 (flags) carrega `nz_carga`, já que as flags agora são registradas.
+
+### `tb/cpu/cpu_tb.v` e `programas/integracao.mem` (novos)
+
+Testbench da CPU executando um programa que exercita leitura, ULA, escrita, os dois
+desfechos de um desvio condicional e a parada. Confere automaticamente o AC, a
+memória, as flags e onde o processador parou.
+
+## O que ainda falta para a entrega
+
+Pelos critérios do projeto, ainda faltam:
+
+- **Seis programas de demonstração**: duas somas, duas operações lógicas e duas
+  estruturas condicionais. Hoje existe um único programa, de integração.
+- **Diagrama da arquitetura e da FSM**, com a descrição dos estados e os sinais de
+  controle associados a cada um. A descrição textual já está no README; falta o
+  desenho.
