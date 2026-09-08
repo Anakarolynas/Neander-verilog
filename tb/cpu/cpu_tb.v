@@ -27,6 +27,22 @@
 
 module cpu_tb;
 
+    // ========================================================
+    // ARQUIVO DE ONDAS
+    //
+    // Gera sim/cpu.vcd, para abrir no GTKWave:
+    //     gtkwave sim/cpu.vcd
+    //
+    // O 0 no $dumpvars manda registrar o testbench inteiro,
+    // incluindo os sinais internos dos modulos instanciados.
+    // ========================================================
+
+    initial begin
+        $dumpfile("sim/cpu.vcd");
+        $dumpvars(0, cpu_tb);
+    end
+
+
     reg clk = 1'b0;
     reg rst = 1'b1;
 

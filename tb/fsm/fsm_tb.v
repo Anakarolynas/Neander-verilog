@@ -15,6 +15,22 @@
 
 module fsm_tb;
 
+    // ========================================================
+    // ARQUIVO DE ONDAS
+    //
+    // Gera sim/fsm.vcd, para abrir no GTKWave:
+    //     gtkwave sim/fsm.vcd
+    //
+    // O 0 no $dumpvars manda registrar o testbench inteiro,
+    // incluindo os sinais internos dos modulos instanciados.
+    // ========================================================
+
+    initial begin
+        $dumpfile("sim/fsm.vcd");
+        $dumpvars(0, fsm_tb);
+    end
+
+
     reg clk = 1'b0;
     reg rst = 1'b1;
     reg [3:0] opcode = 4'b0000;

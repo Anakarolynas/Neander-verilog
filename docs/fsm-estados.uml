@@ -1,0 +1,171 @@
+@startuml fsm-neander
+' ============================================================
+' NEANDER - Diagrama de estados da unidade de controle
+' Projeto: Processador Neander em Verilog
+'
+' Implementacao: src/fsm.v (sequenciador) e src/unit_control.v
+' (decodificador dos sinais de controle).
+'
+' Cada estado mostra:
+'   - o passo (t0 a t7) e a codificacao de 3 bits
+'   - a transferencia realizada
+'   - os sinais de controle ativos
+'
+' Os sinais nao listados ficam em zero: o decodificador zera todos
+' no inicio do bloco combinacional e liga apenas os do estado atual.
+' ============================================================
+
+title Neander — FSM da Unidade de Controle
+
+skinparam state {
+    BackgroundColor White
+    BorderColor Black
+    FontName Arial
+}
+skinparam shadowing false
+
+[*] --> FETCH_STEP_1 : rst
+
+' ------------------------------------------------------------
+' BUSCA DA INSTRUCAO
+' ------------------------------------------------------------
+
+state "FETCH_STEP_1" as FETCH_STEP_1
+FETCH_STEP_1 : **t0** — 000
+FETCH_STEP_1 : REM <- PC
+FETCH_STEP_1 : sel_rem=0, carga_rem
+
+state "FETCH_STEP_2" as FETCH_STEP_2
+FETCH_STEP_2 : **t1** — 001
+FETCH_STEP_2 : RDM <- MEM(REM)
+FETCH_STEP_2 : PC <- PC + 1
+FETCH_STEP_2 : sel_rdm=0, read, carga_rdm,
+FETCH_STEP_2 : incrementa_pc
+
+state "FETCH_STEP_3" as FETCH_STEP_3
+FETCH_STEP_3 : **t2** — 111
+FETCH_STEP_3 : RI <- RDM
+FETCH_STEP_3 : carga_ri
+FETCH_STEP_3 : ---
+FETCH_STEP_3 : //estado proprio porque o RDM//
+FETCH_STEP_3 : //so fica valido apos a borda//
+
+' ------------------------------------------------------------
+' DECODIFICACAO
+' ------------------------------------------------------------
+
+state "DECODE" as DECODE
+DECODE : **t3** — 010
+DECODE : REM <- PC (so com operando)
+DECODE : sel_rem=0, carga_rem
+DECODE : ---
+DECODE : //o opcode ja e valido aqui//
+
+' ------------------------------------------------------------
+' BUSCA DO OPERANDO
+' ------------------------------------------------------------
+
+state "FETCH_OPERAND_STEP_1" as FETCH_OPERAND_STEP_1
+FETCH_OPERAND_STEP_1 : **t4** — 100
+FETCH_OPERAND_STEP_1 : RDM <- MEM(REM)
+FETCH_OPERAND_STEP_1 : PC <- PC + 1
+FETCH_OPERAND_STEP_1 : sel_rdm=0, read, carga_rdm,
+FETCH_OPERAND_STEP_1 : incrementa_pc
+
+state "FETCH_OPERAND_STEP_2" as FETCH_OPERAND_STEP_2
+FETCH_OPERAND_STEP_2 : **t5** — 011
+FETCH_OPERAND_STEP_2 : ---
+FETCH_OPERAND_STEP_2 : **JMP:** PC <- RDM
+FETCH_OPERAND_STEP_2 : carga_pc
+FETCH_OPERAND_STEP_2 : **JZ:** PC <- RDM se Z=1
+FETCH_OPERAND_STEP_2 : carga_pc se Z
+FETCH_OPERAND_STEP_2 : **JN:** PC <- RDM se N=1
+FETCH_OPERAND_STEP_2 : carga_pc se N
+FETCH_OPERAND_STEP_2 : **demais:** REM <- RDM
+FETCH_OPERAND_STEP_2 : sel_rem=1, carga_rem
+
+' ------------------------------------------------------------
+' EXECUCAO
+' ------------------------------------------------------------
+
+state "EXECUTE_STEP_1" as EXECUTE_STEP_1
+EXECUTE_STEP_1 : **t6** — 101
+EXECUTE_STEP_1 : ---
+EXECUTE_STEP_1 : **STA:** RDM <- AC
+EXECUTE_STEP_1 : sel_rdm=1, carga_rdm
+EXECUTE_STEP_1 : **LDA/ADD/OR/AND:** RDM <- MEM(REM)
+EXECUTE_STEP_1 : sel_rdm=0, read, carga_rdm
+EXECUTE_STEP_1 : **NOT:** AC <- NOT(AC); N,Z
+EXECUTE_STEP_1 : sel_ula=011, carga_ac, carga_nz
+EXECUTE_STEP_1 : **HLT:** nenhum sinal
+
+state "EXECUTE_STEP_2" as EXECUTE_STEP_2
+EXECUTE_STEP_2 : **t7** — 110
+EXECUTE_STEP_2 : ---
+EXECUTE_STEP_2 : **STA:** MEM(REM) <- RDM
+EXECUTE_STEP_2 : write
+EXECUTE_STEP_2 : **LDA:** AC <- RDM; N,Z
+EXECUTE_STEP_2 : sel_ula=100, carga_ac, carga_nz
+EXECUTE_STEP_2 : **ADD:** AC <- AC + RDM; N,Z
+EXECUTE_STEP_2 : sel_ula=000, carga_ac, carga_nz
+EXECUTE_STEP_2 : **OR:** AC <- AC OR RDM; N,Z
+EXECUTE_STEP_2 : sel_ula=010, carga_ac, carga_nz
+EXECUTE_STEP_2 : **AND:** AC <- AC AND RDM; N,Z
+EXECUTE_STEP_2 : sel_ula=001, carga_ac, carga_nz
+
+' ------------------------------------------------------------
+' TRANSICOES
+' ------------------------------------------------------------
+
+FETCH_STEP_1 --> FETCH_STEP_2
+FETCH_STEP_2 --> FETCH_STEP_3
+FETCH_STEP_3 --> DECODE
+
+DECODE -up-> FETCH_STEP_1 : NOP
+DECODE --> EXECUTE_STEP_1 : NOT, HLT\n(sem operando)
+DECODE --> FETCH_OPERAND_STEP_1 : STA, LDA, ADD, OR,\nAND, JMP, JZ, JN\n(com operando)
+
+FETCH_OPERAND_STEP_1 --> FETCH_OPERAND_STEP_2
+
+FETCH_OPERAND_STEP_2 -up-> FETCH_STEP_1 : JMP, JZ, JN\n(o desvio termina aqui)
+FETCH_OPERAND_STEP_2 --> EXECUTE_STEP_1 : STA, LDA, ADD,\nOR, AND
+
+EXECUTE_STEP_1 --> EXECUTE_STEP_1 : HLT\n(processador parado)
+EXECUTE_STEP_1 -up-> FETCH_STEP_1 : NOT
+EXECUTE_STEP_1 --> EXECUTE_STEP_2 : STA, LDA, ADD,\nOR, AND
+
+EXECUTE_STEP_2 -up-> FETCH_STEP_1
+
+' ------------------------------------------------------------
+' OBSERVACOES
+' ------------------------------------------------------------
+
+note as NOTA_DESVIOS
+  Os desvios condicionais **nao** alteram
+  a sequencia de estados: JZ e JN passam
+  por aqui tanto quando desviam quanto
+  quando nao desviam.
+
+  O operando precisa ser lido de qualquer
+  forma, e o PC <- PC+1 do t4 ja deixa o
+  PC no lugar certo caso o desvio nao seja
+  tomado. A condicao decide apenas se o
+  sinal carga_pc e ativado.
+
+  Por isso a FSM nao consulta as flags
+  N e Z: quem faz isso e o decodificador.
+end note
+
+note bottom of EXECUTE_STEP_1
+  O HLT trava a FSM neste estado.
+  So o rst tira o processador daqui.
+end note
+
+legend bottom
+  **Ciclos por instrucao**
+  ====
+  NOP: 4  |  NOT: 5  |  JMP, JZ, JN: 6
+  STA, LDA, ADD, OR, AND: 8  |  HLT: para no t6
+endlegend
+
+@enduml

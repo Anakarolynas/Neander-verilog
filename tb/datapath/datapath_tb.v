@@ -24,6 +24,22 @@
 module datapath_tb;
 
     // ========================================================
+    // ARQUIVO DE ONDAS
+    //
+    // Gera sim/datapath.vcd, para abrir no GTKWave:
+    //     gtkwave sim/datapath.vcd
+    //
+    // O 0 no $dumpvars manda registrar o testbench inteiro,
+    // incluindo os sinais internos dos modulos instanciados.
+    // ========================================================
+
+    initial begin
+        $dumpfile("sim/datapath.vcd");
+        $dumpvars(0, datapath_tb);
+    end
+
+
+    // ========================================================
     // SINAIS DO CLOCK E RESET
     // ========================================================
 

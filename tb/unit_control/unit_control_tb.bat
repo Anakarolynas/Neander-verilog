@@ -10,6 +10,10 @@ REM
 REM  Compila tb\unit_control\unit_control_tb.v junto com os fontes do
 REM  modulo e roda a simulacao. O executavel gerado vai para
 REM  sim\sim_unit_control.
+REM
+REM  Gera:
+REM    sim\sim_unit_control     executavel da simulacao
+REM    sim\unit_control.vcd     formas de onda, para abrir no GTKWave
 REM ============================================================
 
 setlocal

@@ -21,6 +21,22 @@
 
 module ula_tb;
 
+    // ========================================================
+    // ARQUIVO DE ONDAS
+    //
+    // Gera sim/ula.vcd, para abrir no GTKWave:
+    //     gtkwave sim/ula.vcd
+    //
+    // O 0 no $dumpvars manda registrar o testbench inteiro,
+    // incluindo os sinais internos dos modulos instanciados.
+    // ========================================================
+
+    initial begin
+        $dumpfile("sim/ula.vcd");
+        $dumpvars(0, ula_tb);
+    end
+
+
     // --------------------------------------------------------
     // Declaração dos sinais
     // --------------------------------------------------------

@@ -22,19 +22,23 @@ Projeto de implementação do processador Neander utilizando Verilog HDL.
 Cada módulo tem sua própria pasta dentro de `tb/`, com o testbench e um script
 que compila e executa a simulação:
 
+Cada pasta tem duas versões do script: `.bat` para Windows e `.sh` para
+Linux/macOS. As duas fazem exatamente a mesma coisa.
+
 ```
 tb/
 ├── simular_tudo.bat          roda todos os testbenches de uma vez
+├── simular_tudo.sh
 ├── cpu/
 │   ├── cpu_tb.v              testbench do processador completo
-│   └── cpu_tb.bat
+│   ├── cpu_tb.bat
+│   └── cpu_tb.sh
 ├── datapath/
 ├── fsm/
 │   ├── fsm_tb.v
-│   └── fsm_tb.bat
+│   ├── fsm_tb.bat
+│   └── fsm_tb.sh
 ├── mux/
-│   ├── mux_tb.v
-│   └── mux_tb.bat
 ├── pc/
 ├── ula/
 └── unit_control/
@@ -42,7 +46,7 @@ tb/
 
 ### Rodando
 
-Há três formas, todas equivalentes:
+**No Windows**, há três formas equivalentes:
 
 1. **Duplo clique** no `.bat` da pasta do módulo. A janela fica aberta no final
    para você ler o resultado.
@@ -51,47 +55,92 @@ Há três formas, todas equivalentes:
    tb\fsm\fsm_tb.bat
    tb\unit_control\unit_control_tb.bat
    ```
-3. **Todos de uma vez**, com `tb\simular_tudo.bat` (mostra um resumo no final e
-   retorna código de erro diferente de zero se algum falhar).
+3. **Todos de uma vez**, com `tb\simular_tudo.bat`.
 
 Passando o argumento `nopause` (ex.: `tb\fsm\fsm_tb.bat nopause`) o script não
 espera você apertar uma tecla no final — útil para encadear comandos.
 
-Os executáveis gerados vão para `sim\sim_<módulo>`. Essa pasta é recriada
-automaticamente e **não é versionada**: são arquivos binários gerados, que só
-causariam conflito no Git.
+**No Linux ou macOS**, use os `.sh`:
+
+```
+./tb/fsm/fsm_tb.sh
+./tb/simular_tudo.sh
+```
+
+Os dois `simular_tudo` mostram um resumo no final e retornam código de erro
+diferente de zero se algum testbench falhar.
+
+### O que é gerado
+
+Tudo vai para `sim/`, que é recriada automaticamente e **não é versionada**:
+
+| Arquivo | O que é |
+|---|---|
+| `sim/sim_<módulo>` | Executável da simulação |
+| `sim/<módulo>.vcd` | Formas de onda, para abrir no GTKWave |
+
+Para ver as formas de onda:
+
+```
+gtkwave sim/cpu.vcd
+```
+
+O `$dumpvars` de cada testbench registra a hierarquia inteira, então o `.vcd`
+traz também os sinais internos dos módulos instanciados — dá para acompanhar o
+estado da FSM, os sinais de controle e o conteúdo dos registradores ciclo a
+ciclo. No caso do `cpu.vcd` isso inclui as sete instâncias da CPU, uma por
+programa.
 
 ### Pré-requisito
 
-O **Icarus Verilog** precisa estar instalado e no PATH do Windows (a pasta `bin`
-dele, por exemplo `C:\iverilog\bin`). Se não estiver, os scripts avisam com uma
-mensagem explicando o que fazer, em vez de falhar com um erro confuso.
+O **Icarus Verilog** precisa estar instalado e no PATH. Se não estiver, os
+scripts avisam com uma mensagem explicando o que fazer, em vez de falhar com um
+erro confuso.
+
+- **Windows**: a pasta `bin` dele no PATH, por exemplo `C:\iverilog\bin`
+- **Debian/Ubuntu**: `sudo apt install iverilog gtkwave`
+- **Fedora**: `sudo dnf install iverilog gtkwave`
+- **macOS**: `brew install icarus-verilog`
 
 ### Criando um testbench para um módulo novo
 
-1. Crie a pasta `tb/<módulo>/` e escreva o `tb/<módulo>/<módulo>_tb.v`.
-2. Copie qualquer `.bat` existente para `tb/<módulo>/<módulo>_tb.bat` e ajuste
-   apenas as duas linhas do topo:
+1. Crie a pasta `tb/<módulo>/` e escreva o `tb/<módulo>/<módulo>_tb.v`. Para
+   gerar as formas de onda, inclua:
+   ```verilog
+   initial begin
+       $dumpfile("sim/<módulo>.vcd");
+       $dumpvars(0, <módulo>_tb);
+   end
+   ```
+2. Copie um `.bat` e um `.sh` existentes para a pasta nova e ajuste apenas as
+   duas linhas do topo de cada um:
    ```bat
    set "NOME=<módulo>"
    set "FONTES=src\<módulo>.v"
    ```
+   ```bash
+   NOME="<módulo>"
+   FONTES="src/<módulo>.v"
+   ```
    O `FONTES` lista todos os arquivos de `src/` que o testbench precisa. Se o
    módulo instanciar outros, some todos ali — por exemplo, o da unidade de
-   controle usa `src\unit_control.v src\fsm.v`, porque a `Unit_Control`
+   controle usa `src/unit_control.v src/fsm.v`, porque a `Unit_Control`
    instancia a `FSM` por dentro.
-3. Adicione uma linha `call :roda <módulo>` no `tb/simular_tudo.bat`.
+3. Registre o módulo nos dois scripts que rodam tudo: uma linha
+   `call :roda <módulo>` no `tb/simular_tudo.bat`, e o nome na lista
+   `TESTBENCHES` do `tb/simular_tudo.sh`.
 
-O resto do script é igual em todos e não precisa ser alterado. Ele já cuida de
-achar a raiz do projeto (funciona de qualquer pasta), de passar `-I src` para o
-`iverilog` — necessário para o `` `include "neander_states.vh" `` ser encontrado —
-e de reportar erro de compilação separado de erro de execução.
+O resto dos scripts é igual em todos e não precisa ser alterado. Eles já cuidam
+de achar a raiz do projeto (funcionam de qualquer pasta), de passar `-I src` para
+o `iverilog` — necessário para o `` `include "neander_states.vh" `` ser
+encontrado — e de reportar erro de compilação separado de erro de execução.
 
-> **Atenção ao editar os `.bat`:** eles precisam ser salvos com quebra de linha
-> **CRLF**. Com LF o `cmd` do Windows não encontra os rótulos (`:fim`, `:roda`) e
-> o script falha com "não foi possível localizar o rótulo em lote". O
-> `.gitattributes` do projeto já força isso no clone, mas vale conferir se o seu
-> editor não estiver convertendo.
+> **Atenção às quebras de linha ao editar os scripts.** Os `.bat` precisam de
+> **CRLF**: com LF o `cmd` do Windows não encontra os rótulos (`:fim`, `:roda`) e
+> falha com "não foi possível localizar o rótulo em lote". Os `.sh` precisam de
+> **LF**: com CRLF o bash reclama de `$'\r': command not found`. O
+> `.gitattributes` do projeto já força os dois casos no clone, mas vale conferir
+> se o seu editor não está convertendo.
 
 ## Arquitetura
 
@@ -197,6 +246,16 @@ ele instancia a `FSM` internamente, então **o datapath deve instanciar apenas o
 | `Unit_Control` | `src/unit_control.v` | Decodificador combinacional: gera os sinais de controle de cada passo |
 
 ### Estados
+
+O diagrama de estados está em [`docs/fsm-estados.uml`](docs/fsm-estados.uml), em
+formato PlantUML. Ele mostra os 8 estados com a codificação, as transferências e os
+sinais de controle de cada um, além das condições de transição. Para gerar a imagem:
+
+```
+java -jar plantuml.jar -charset UTF-8 -tpng docs/fsm-estados.uml
+```
+
+Também dá para colar o conteúdo em qualquer editor PlantUML online.
 
 Os 8 estados ficam em `src/neander_states.vh`, incluído pelos dois módulos com
 `` `include "neander_states.vh" ``. **Fonte única de verdade** — não redeclarar

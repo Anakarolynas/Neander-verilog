@@ -18,6 +18,22 @@
 
 module tb_pc;
 
+    // ========================================================
+    // ARQUIVO DE ONDAS
+    //
+    // Gera sim/pc.vcd, para abrir no GTKWave:
+    //     gtkwave sim/pc.vcd
+    //
+    // O 0 no $dumpvars manda registrar o testbench inteiro,
+    // incluindo os sinais internos dos modulos instanciados.
+    // ========================================================
+
+    initial begin
+        $dumpfile("sim/pc.vcd");
+        $dumpvars(0, tb_pc);
+    end
+
+
     // --------------------------------------------------------
     // Sinais de entrada
     // --------------------------------------------------------

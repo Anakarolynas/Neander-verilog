@@ -18,6 +18,22 @@
 
 module mux_tb;
 
+    // ========================================================
+    // ARQUIVO DE ONDAS
+    //
+    // Gera sim/mux.vcd, para abrir no GTKWave:
+    //     gtkwave sim/mux.vcd
+    //
+    // O 0 no $dumpvars manda registrar o testbench inteiro,
+    // incluindo os sinais internos dos modulos instanciados.
+    // ========================================================
+
+    initial begin
+        $dumpfile("sim/mux.vcd");
+        $dumpvars(0, mux_tb);
+    end
+
+
     // --------------------------------------------------------
     // Sinais de entrada do MUX
     // --------------------------------------------------------

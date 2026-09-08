@@ -9,6 +9,10 @@ REM    - tb\fsm\fsm_tb.bat nopause    (sem a pausa no final)
 REM
 REM  Compila tb\fsm\fsm_tb.v junto com os fontes do modulo e roda
 REM  a simulacao. O executavel gerado vai para sim\sim_fsm.
+REM
+REM  Gera:
+REM    sim\sim_fsm     executavel da simulacao
+REM    sim\fsm.vcd     formas de onda, para abrir no GTKWave
 REM ============================================================
 
 setlocal

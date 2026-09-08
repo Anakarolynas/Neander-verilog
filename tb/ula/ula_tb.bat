@@ -4,11 +4,15 @@ REM  NEANDER - Simulacao do testbench da ULA
 REM
 REM  Uso:
 REM    - duplo clique neste arquivo, ou
-REM    - tb\fsm\fsm_tb.bat            (de qualquer pasta)
-REM    - tb\fsm\fsm_tb.bat nopause    (sem a pausa no final)
+REM    - tb\ula\ula_tb.bat            (de qualquer pasta)
+REM    - tb\ula\ula_tb.bat nopause    (sem a pausa no final)
 REM
-REM  Compila tb\fsm\fsm_tb.v junto com os fontes do modulo e roda
-REM  a simulacao. O executavel gerado vai para sim\sim_fsm.
+REM  Compila tb\ula\ula_tb.v junto com os fontes do modulo e roda
+REM  a simulacao. O executavel gerado vai para sim\sim_ula.
+REM
+REM  Gera:
+REM    sim\sim_ula     executavel da simulacao
+REM    sim\ula.vcd     formas de onda, para abrir no GTKWave
 REM ============================================================
 
 setlocal

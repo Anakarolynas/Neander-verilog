@@ -4,11 +4,15 @@ REM  NEANDER - Simulacao do testbench do multiplexador
 REM
 REM  Uso:
 REM    - duplo clique neste arquivo, ou
-REM    - tb\fsm\fsm_tb.bat            (de qualquer pasta)
-REM    - tb\fsm\fsm_tb.bat nopause    (sem a pausa no final)
+REM    - tb\mux\mux_tb.bat            (de qualquer pasta)
+REM    - tb\mux\mux_tb.bat nopause    (sem a pausa no final)
 REM
-REM  Compila tb\fsm\fsm_tb.v junto com os fontes do modulo e roda
-REM  a simulacao. O executavel gerado vai para sim\sim_fsm.
+REM  Compila tb\mux\mux_tb.v junto com os fontes do modulo e roda
+REM  a simulacao. O executavel gerado vai para sim\sim_mux.
+REM
+REM  Gera:
+REM    sim\sim_mux     executavel da simulacao
+REM    sim\mux.vcd     formas de onda, para abrir no GTKWave
 REM ============================================================
 
 setlocal

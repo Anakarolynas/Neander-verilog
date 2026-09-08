@@ -4,11 +4,15 @@ REM  NEANDER - Simulacao do testbench do contador de programa
 REM
 REM  Uso:
 REM    - duplo clique neste arquivo, ou
-REM    - tb\fsm\fsm_tb.bat            (de qualquer pasta)
-REM    - tb\fsm\fsm_tb.bat nopause    (sem a pausa no final)
+REM    - tb\pc\pc_tb.bat            (de qualquer pasta)
+REM    - tb\pc\pc_tb.bat nopause    (sem a pausa no final)
 REM
-REM  Compila tb\fsm\fsm_tb.v junto com os fontes do modulo e roda
-REM  a simulacao. O executavel gerado vai para sim\sim_fsm.
+REM  Compila tb\pc\pc_tb.v junto com os fontes do modulo e roda
+REM  a simulacao. O executavel gerado vai para sim\sim_pc.
+REM
+REM  Gera:
+REM    sim\sim_pc     executavel da simulacao
+REM    sim\pc.vcd     formas de onda, para abrir no GTKWave
 REM ============================================================
 
 setlocal

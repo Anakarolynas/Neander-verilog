@@ -9,6 +9,10 @@ REM    - tb\datapath\datapath_tb.bat nopause    (sem a pausa no final)
 REM
 REM  Compila tb\datapath\datapath_tb.v junto com os fontes do modulo e
 REM  roda a simulacao. O executavel gerado vai para sim\sim_datapath.
+REM
+REM  Gera:
+REM    sim\sim_datapath     executavel da simulacao
+REM    sim\datapath.vcd     formas de onda, para abrir no GTKWave
 REM ============================================================
 
 setlocal

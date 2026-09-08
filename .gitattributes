@@ -2,6 +2,10 @@
 # nao consegue localizar os rotulos (:fim, :roda) e os scripts falham.
 *.bat text eol=crlf
 
+# Os scripts .sh precisam de LF: com CRLF o bash reclama do \r no shebang
+# e em cada comando ("$'\r': command not found").
+*.sh text eol=lf
+
 # Codigo-fonte e documentacao ficam com LF no repositorio
 *.v    text eol=lf
 *.vh   text eol=lf

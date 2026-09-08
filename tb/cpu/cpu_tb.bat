@@ -13,6 +13,10 @@ REM
 REM  O programa executado e carregado de programas\integracao.mem.
 REM  Por isso a simulacao roda a partir da raiz do projeto: o caminho
 REM  do arquivo no testbench e relativo a ela.
+REM
+REM  Gera:
+REM    sim\sim_cpu     executavel da simulacao
+REM    sim\cpu.vcd     formas de onda, para abrir no GTKWave
 REM ============================================================
 
 setlocal
