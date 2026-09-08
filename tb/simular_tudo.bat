@@ -26,6 +26,7 @@ call :roda fsm
 call :roda unit_control
 call :roda datapath
 call :roda cpu
+call :roda programas
 
 echo.
 echo ============================================================

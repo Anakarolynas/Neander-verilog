@@ -17,7 +17,7 @@ set -u
 
 TB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-TESTBENCHES="mux pc ula fsm unit_control datapath cpu"
+TESTBENCHES="mux pc ula fsm unit_control datapath cpu programas"
 
 falhas=0
 

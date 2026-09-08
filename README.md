@@ -33,6 +33,11 @@ tb/
 │   ├── cpu_tb.v              testbench do processador completo
 │   ├── cpu_tb.bat
 │   └── cpu_tb.sh
+├── programas/                um .vcd por programa, para analisar as ondas
+│   ├── soma1_tb.v
+│   ├── ...
+│   ├── programas_tb.bat
+│   └── programas_tb.sh
 ├── datapath/
 ├── fsm/
 │   ├── fsm_tb.v
@@ -226,13 +231,26 @@ somas, duas operações lógicas e duas estruturas condicionais.
 Como o Neander não tem subtração, o decremento do contador em `condicional2.mem`
 é feito somando `11111111`, que é -1 em complemento de dois.
 
-### Testbench
+### Testbenches da CPU
 
-`tb/cpu/cpu_tb.v` instancia uma CPU para cada programa — cada uma com a sua
-própria memória — e as executa em paralelo, conferindo automaticamente o AC, as
-posições de memória escritas, as flags e o endereço onde o processador parou.
+Há dois, com propósitos diferentes:
 
-Para rodar: duplo clique em `tb\cpu\cpu_tb.bat`.
+| Testbench | Para quê | Arquivo de ondas |
+|---|---|---|
+| `tb/cpu/cpu_tb.v` | **Verificação.** Instancia uma CPU por programa e executa todas em paralelo, conferindo AC, memória, flags e onde cada uma parou | Um só `sim/cpu.vcd`, com as sete CPUs juntas |
+| `tb/programas/` | **Análise das formas de onda.** Roda cada programa em uma simulação separada | Um `sim/<programa>.vcd` por programa, só com aquela CPU |
+
+O `cpu_tb` é o testbench da CPU exigido pelo projeto: uma execução confere os seis
+programas de uma vez. Já o `tb/programas/` existe porque o `cpu.vcd` junta sete
+CPUs num arquivo só (mais de 1100 sinais), o que fica pesado para analisar no
+GTKWave — cada arquivo separado tem cerca de 165 sinais, só do programa em questão.
+
+```
+tb\cpu\cpu_tb.bat              verifica os seis programas
+tb\programas\programas_tb.bat  gera um .vcd por programa
+```
+
+No Linux, `./tb/cpu/cpu_tb.sh` e `./tb/programas/programas_tb.sh`.
 
 ## Unidade de Controle (`src/unit_control.v` + `src/fsm.v`)
 
