@@ -160,6 +160,16 @@ O projeto implementa a arquitetura didática Neander, incluindo:
 - CPU
 - ISA do Neander
 
+### Diagramas
+
+Dois diagramas em PlantUML, em `docs/`, gerados do mesmo modo que o
+[diagrama de estados](#estados):
+
+| Arquivo | O que mostra |
+|---|---|
+| [`docs/arquitetura-modulos.uml`](docs/arquitetura-modulos.uml) | Visão geral: como `cpu.v` separa `datapath.v`, `unit_control.v` e `mem.v`, com os barramentos entre os três e a árvore de instanciação completa |
+| [`docs/arquitetura-datapath.uml`](docs/arquitetura-datapath.uml) | Detalhe interno do `datapath.v`: registradores, MUXes, ULA e todos os sinais de controle que chegam da unidade de controle |
+
 ## CPU (`src/cpu.v`)
 
 Módulo de topo do processador. Instancia e liga as três partes:

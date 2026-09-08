@@ -1,0 +1,68 @@
+@startuml arquitetura-neander
+' ============================================================
+' NEANDER - Diagrama de arquitetura: como os módulos se separam
+' Projeto: Processador Neander em Verilog
+'
+' Mostra a árvore de instanciação real do código em src/ e os
+' barramentos entre os três blocos principais. O detalhe interno do
+' datapath (registradores, MUXes, ULA) está em separado, em
+' arquitetura-datapath.uml — aqui o foco é a separação de módulos.
+' ============================================================
+
+title Neander — Separação dos Módulos (src/)
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam component {
+    BackgroundColor White
+    BorderColor Black
+    FontName Arial
+    FontSize 14
+}
+skinparam package {
+    BackgroundColor White
+    BorderColor Black
+    FontName Arial
+}
+skinparam arrow {
+    FontName Arial
+    FontSize 12
+}
+
+package "cpu.v — módulo de topo\n(instancia os três abaixo e faz a ligação entre eles)" as CPU {
+
+    component "==datapath.v\n\nRegistradores (PC, REM, RDM, RI, AC)\nMUXes, ULA, flags N/Z" as DP
+
+    component "==unit_control.v\n\nFSM (fsm.v) + decodificador\ndos sinais de controle" as UC
+
+    component "==mem.v  (RAM)\n\n256 posições de 8 bits\nleitura assíncrona, escrita síncrona" as MEM
+
+    DP -down-> MEM : endereço (REM)\ndado a escrever (RDM)
+    MEM -up-> DP : dado lido
+
+    DP .right.> UC : opcode (RI[7:4])\nflags N, Z
+    UC .left.> DP : sinais de controle\n(carga_pc, sel_rem, op_ula, ...)
+
+    UC -down-> MEM : read, write
+}
+
+note bottom of CPU
+  Portas externas do cpu.v: **clk**, **rst**
+  Saídas de observação (testbench/ondas): pc, ac, ri, n, z
+  Parâmetro: **PROGRAMA** — arquivo .mem carregado na RAM
+end note
+
+legend bottom
+  **Hierarquia de instâncias**
+  ====
+  cpu
+  ├── datapath
+  │   ├── pc, register8 (x4: REM, RDM, RI, AC)
+  │   ├── mux (x2: entrada do REM, entrada do RDM)
+  │   └── ula
+  ├── RAM  (mem.v)
+  └── Unit_Control
+      └── FSM  (fsm.v)
+endlegend
+
+@enduml

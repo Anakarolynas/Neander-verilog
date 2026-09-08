@@ -1,0 +1,75 @@
+@startuml arquitetura-datapath
+' ============================================================
+' NEANDER - Detalhe interno do datapath.v
+' Projeto: Processador Neander em Verilog
+'
+' Complementa arquitetura-modulos.uml: aqui é o miolo do bloco
+' "datapath.v", com os registradores, MUXes e a ULA. Segue o mesmo
+' layout do diagrama de referência da disciplina.
+' ============================================================
+
+title Neander — Datapath (interno)
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam component {
+    BackgroundColor White
+    BorderColor Black
+    FontName Arial
+}
+skinparam arrow {
+    FontName Arial
+    FontSize 11
+}
+
+component "PC\n(pc.v)" as PC
+component "MUX REM\n(mux.v)" as MUXREM
+component "REM\n(register8.v)" as REM
+component "RAM\n(mem.v)" as MEM #LightYellow
+component "MUX RDM\n(mux.v)" as MUXRDM
+component "RDM\n(register8.v)" as RDM
+component "RI\n(register8.v)" as RI
+component "AC\n(register8.v)" as AC
+component "ULA\n(ula.v)" as ULA
+component "Flags N,Z" as FLAGS
+component "Unidade de\nControle" as UC #LightBlue
+
+PC -right-> MUXREM : pc_out (entrada 0)
+MUXREM -right-> REM : rem_din
+REM -right-> MEM : mem_addr
+
+MEM -down-> MUXRDM : mem_din (entrada 0)
+AC -up-> MUXRDM : ac_out (entrada 1)
+MUXRDM -down-> RDM : rdm_din
+
+RDM -up-> MUXREM : rdm_out (entrada 1)
+RDM -up-> PC : rdm_out (carga_pc)
+RDM -down-> RI : rdm_out
+RDM -down-> MEM : rdm_out (mem_dout)
+
+AC -down-> ULA : X
+RDM -down-> ULA : Y
+ULA -down-> AC : resultado
+ULA -down-> FLAGS : N_ula, Z_ula
+
+RI -down-> UC : opcode (RI[7:4])
+FLAGS -down-> UC : N, Z
+
+UC -up-> PC : pc_carga, pc_inc
+UC -up-> MUXREM : rem_sel
+UC -up-> REM : rem_carga
+UC -up-> MUXRDM : rdm_sel
+UC -up-> RDM : rdm_carga
+UC -up-> RI : ri_carga
+UC -up-> AC : ac_carga
+UC -up-> ULA : op_ula
+UC -up-> FLAGS : nz_carga
+UC -up-> MEM : read, write
+
+note bottom of MEM
+  read/write chegam direto da
+  unidade de controle, sem
+  passar pelo datapath.
+end note
+
+@enduml
